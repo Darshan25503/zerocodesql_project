@@ -1,0 +1,237 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
+}
+
+model DataSource {
+    id                            Int                             @id @default(autoincrement())
+    Name                          String
+    databaseType                  String
+    Host                          String?
+    User                          String?
+    Password                      String?
+    Database                      String?
+    Port                          Int?
+    proxyUser                     String? // Nullable
+    proxyHost                     String? // Nullable
+    proxyPort                     Int? // Nullable
+    proxyAuthenticationType       String? // Nullable
+    proxyAuthenticationData       String? // Nullable
+    Filename                      String? // Nullable
+    Flags                         String? // Nullable
+    DatabaseEntity                DatabaseEntity[]
+    Role_table_column_permissions Role_table_column_permissions[]
+    Form                          Form[]
+    FormField                     FormField[]
+    DashboardComponent            DashboardComponent[]
+    ApiEntity                     ApiEntity[]
+    User_table_column_permissions User_table_column_permissions[]
+}
+
+model User {
+    id                            Int                             @id @default(autoincrement())
+    Username                      String
+    Email                         String                          @unique
+    passwordHash                  String
+    isSuperAdmin                  Boolean
+    Role_id                       Int
+    Role                          Role                            @relation(fields: [Role_id], references: [Id])
+    Session                       Session[]
+    Form                          Form[]
+    User_table_column_permissions User_table_column_permissions[]
+    Audit                         Audit[]
+    ApiEntity                     ApiEntity[]
+}
+
+model Role {
+    Id                            Int                             @id @default(autoincrement())
+    Name                          String
+    Color                         String
+    User                          User[]
+    Role_table_column_permissions Role_table_column_permissions[]
+}
+
+model Session {
+    id           String @id @default(cuid())
+    sessionToken String @unique
+    userId       Int
+    expires      String
+    user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Role_table_column_permissions {
+    Role_id         Int
+    Role            Role           @relation(fields: [Role_id], references: [Id], onDelete: Cascade)
+    Datasource_id   Int
+    DataSource      DataSource     @relation(fields: [Datasource_id], references: [id], onDelete: Cascade)
+    Database_id     Int
+    DatabaseEntity  DatabaseEntity @relation(fields: [Database_id], references: [Id], onDelete: Cascade)
+    Table_id        Int
+    DatabaseTable   DatabaseTable  @relation(fields: [Table_id], references: [Id], onDelete: Cascade)
+    Column_id       Int
+    DatabaseColumn  DatabaseColumn @relation(fields: [Column_id], references: [Id], onDelete: Cascade)
+    permissionFlags Int
+
+    @@id([Role_id, Datasource_id, Database_id, Table_id, Column_id])
+}
+
+model User_table_column_permissions {
+    User_id         Int
+    User            User           @relation(fields: [User_id], references: [id], onDelete: Cascade)
+    Datasource_id   Int
+    DataSource      DataSource     @relation(fields: [Datasource_id], references: [id], onDelete: Cascade)
+    Database_id     Int
+    DatabaseEntity  DatabaseEntity @relation(fields: [Database_id], references: [Id], onDelete: Cascade)
+    Table_id        Int
+    DatabaseTable   DatabaseTable  @relation(fields: [Table_id], references: [Id], onDelete: Cascade)
+    Column_id       Int
+    DatabaseColumn  DatabaseColumn @relation(fields: [Column_id], references: [Id], onDelete: Cascade)
+    permissionFlags Int
+
+    @@id([User_id, Datasource_id, Database_id, Table_id, Column_id])
+}
+
+model DatabaseEntity {
+    Id                            Int                             @id @default(autoincrement())
+    Datasource_id                 Int
+    Name                          String
+    DataSource                    DataSource                      @relation(fields: [Datasource_id], references: [id], onDelete: Cascade)
+    DatabaseTable                 DatabaseTable[]
+    Role_table_column_permissions Role_table_column_permissions[]
+    FormField                     FormField[]
+    ApiEntity                     ApiEntity[]
+    User_table_column_permissions User_table_column_permissions[]
+}
+
+model DatabaseTable {
+    Id                            Int                             @id @default(autoincrement())
+    Database_id                   Int
+    Name                          String
+    Display                       String
+    DatabaseEntity                DatabaseEntity                  @relation(fields: [Database_id], references: [Id], onDelete: Cascade)
+    DatabaseColumn                DatabaseColumn[]
+    Role_table_column_permissions Role_table_column_permissions[]
+    FormField                     FormField[]
+    ApiEntity                     ApiEntity[]
+    User_table_column_permissions User_table_column_permissions[]
+}
+
+model DatabaseColumn {
+    Id                            Int                             @id @default(autoincrement())
+    Table_id                      Int
+    Name                          String
+    Display                       String
+    DataType                      String
+    Order                         Int
+    isPrimaryKey                  Boolean
+    DatabaseTable                 DatabaseTable                   @relation(fields: [Table_id], references: [Id], onDelete: Cascade)
+    Role_table_column_permissions Role_table_column_permissions[]
+    FormField                     FormField[]
+    ApiEntityColumn               ApiEntityColumn[]
+    ForeignKeyId                  Int?
+    ForeignKeyTargetColumn        DatabaseColumn?                 @relation("ForeignKeyTarget", fields: [ForeignKeyId], references: [Id])
+    ForeignKeySourceColumn        DatabaseColumn[]                @relation("ForeignKeyTarget")
+    ForeignKeyDisplayId           Int?
+    ForeignKeyDisplayColumn       DatabaseColumn?                 @relation("ForeignKeyDisplay", fields: [ForeignKeyDisplayId], references: [Id])
+    ForeignKeyDisplaySourceColumn DatabaseColumn[]                @relation("ForeignKeyDisplay")
+    User_table_column_permissions User_table_column_permissions[]
+}
+
+model Form {
+    Id           Int         @id @default(autoincrement())
+    ShareString  String      @unique
+    UserId       Int
+    User         User?       @relation(fields: [UserId], references: [id], onDelete: Cascade)
+    Name         String
+    Title        String
+    Enabled      Boolean
+    FormField    FormField[]
+    DataSource   DataSource? @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+    dataSourceId Int?
+    FormHits     FormHits[]
+}
+
+model FormField {
+    Id                 Int            @id @default(autoincrement())
+    Form_id            Int
+    Datasource_id      Int
+    Database_id        Int
+    Table_id           Int
+    Column_id          Int
+    Visible            Boolean
+    DescriptionOrValue String
+    Order              Int
+    Form               Form           @relation(fields: [Form_id], references: [Id], onDelete: Cascade)
+    DataSource         DataSource     @relation(fields: [Datasource_id], references: [id], onDelete: Cascade)
+    DatabaseEntity     DatabaseEntity @relation(fields: [Database_id], references: [Id], onDelete: Cascade)
+    DatabaseTable      DatabaseTable  @relation(fields: [Table_id], references: [Id], onDelete: Cascade)
+    DatabaseColumn     DatabaseColumn @relation(fields: [Column_id], references: [Id], onDelete: Cascade)
+}
+
+model FormHits {
+    Id        Int      @id @default(autoincrement())
+    Form_Id   Int
+    Timestamp DateTime
+    Form      Form     @relation(fields: [Form_Id], references: [Id], onDelete: Cascade)
+}
+
+model DashboardComponent {
+    Id            Int        @id @default(autoincrement())
+    Title         String
+    Type          String
+    Order         Int
+    Datasource_id Int
+    QuerySql      String
+    DataSource    DataSource @relation(fields: [Datasource_id], references: [id], onDelete: Cascade)
+}
+
+model ApiEntity {
+    Id              Int               @id @default(autoincrement())
+    Name            String
+    Display         String
+    Permissions     Int
+    Enabled         Boolean
+    ApiKey          String
+    UserId          Int
+    User            User?       @relation(fields: [UserId], references: [id], onDelete: Cascade)
+    Datasource_id   Int
+    Database_id     Int
+    Table_id        Int
+    DataSource      DataSource        @relation(fields: [Datasource_id], references: [id], onDelete: Cascade)
+    DatabaseEntity  DatabaseEntity    @relation(fields: [Database_id], references: [Id], onDelete: Cascade)
+    DatabaseTable   DatabaseTable     @relation(fields: [Table_id], references: [Id], onDelete: Cascade)
+    ApiEntityColumn ApiEntityColumn[]
+    ApiHits         ApiHits[]
+}
+
+model ApiEntityColumn {
+    Id             Int            @id @default(autoincrement())
+    Api_id         Int
+    Column_id      Int
+    Order          Int
+    ApiEntity      ApiEntity      @relation(fields: [Api_id], references: [Id], onDelete: Cascade)
+    DatabaseColumn DatabaseColumn @relation(fields: [Column_id], references: [Id], onDelete: Cascade)
+}
+
+model ApiHits {
+    Id        Int       @id @default(autoincrement())
+    Api_Id    Int
+    Timestamp DateTime
+    ApiEntity ApiEntity @relation(fields: [Api_Id], references: [Id], onDelete: Cascade)
+}
+
+model Audit {
+    Id        Int      @id @default(autoincrement())
+    kind      String
+    Timestamp DateTime
+    User_id   Int
+    User      User     @relation(fields: [User_id], references: [id], onDelete: Cascade)
+    Message   String
+}
