@@ -1,0 +1,37 @@
+.sheet-cell {
+    max-height: 35px;
+    width: 100%;
+    background-color: white;
+    color: black;
+    border-style: solid;
+    border-color: #cccccc;
+    border-width: 1px;
+}
+
+.sheet-cell-changed {
+    max-height: 35px;
+    width: 100%;
+    background-color: #89e7ff;
+    color: black;
+    border-style: solid;
+    border-color: #cccccc;
+    border-width: 1px;
+}
+
+.sheet-cell-deleted {
+    max-height: 35px;
+    width: 100%;
+    background-color: #ff7070;
+    color: black;
+    border-style: solid;
+    border-color: #cccccc;
+    border-width: 1px;
+}
+
+.sheet-header-cell {
+    background-color: white;
+    color: black;
+    border-style: solid;
+    border-color: #cccccc;
+    border-width: 1px;
+}
